@@ -30,59 +30,12 @@ class EasyDotIndicator extends StatefulWidget {
   State<EasyDotIndicator> createState() => _EasyDotIndicatorState();
 }
 
-class _EasyDotIndicatorState extends State<EasyDotIndicator> {
-  late GlobalObjectKey stateKey;
-
-  @override
-  void initState() {
-    super.initState();
-
-    /// The state at this level is mainly used to create keys.
-    stateKey = (widget.key as GlobalObjectKey?) ??
-        GlobalObjectKey("_EasyDotIndicatorState${Random().nextInt(10000)}");
-    widget.controller._stateKey = stateKey;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    int visibleNum = widget.visibleNum;
-    if (widget.visibleNum > widget.count) {
-      visibleNum = widget.count;
-    }
-    return DotIndicatorWidget(
-      key: stateKey,
-      visibleNum: visibleNum,
-      maxNum: widget.count,
-      controller: widget.controller,
-      gap: widget.gap,
-    );
-  }
-}
-
-class DotIndicatorWidget extends StatefulWidget {
-  final int visibleNum;
-  final int maxNum;
-  final double gap;
-  final EasyDotIndicatorController controller;
-
-  const DotIndicatorWidget({
-    required this.visibleNum,
-    required this.maxNum,
-    required this.controller,
-    required this.gap,
-    super.key,
-  });
-
-  @override
-  State<DotIndicatorWidget> createState() => DotIndicatorWidgetState();
-}
-
-class DotIndicatorWidgetState extends State<DotIndicatorWidget>
+class _EasyDotIndicatorState extends State<EasyDotIndicator>
     with SingleTickerProviderStateMixin {
   late ScrollController scrollController;
   late List<Dot> dots;
   late Animation<double> animation;
-  late AnimationController controller;
+  late AnimationController animController;
 
   /// The number of dots that can be displayed to the left or right of the current dot
   late int sideDotNum;
@@ -92,11 +45,11 @@ class DotIndicatorWidgetState extends State<DotIndicatorWidget>
     super.initState();
     scrollController = ScrollController();
     sideDotNum = (widget.visibleNum - 1) ~/ 2;
-    dots = List.generate(widget.maxNum,
+    dots = List.generate(widget.count,
         (index) => indicatorDot(index, widget.controller.current));
-    controller = AnimationController(
+    animController = AnimationController(
         duration: const Duration(milliseconds: 150), vsync: this);
-    animation = Tween<double>(begin: 0, end: 1).animate(controller)
+    animation = Tween<double>(begin: 0, end: 1).animate(animController)
       ..addListener(() {
         if (!mounted) return;
         setState(() {});
@@ -105,39 +58,42 @@ class DotIndicatorWidgetState extends State<DotIndicatorWidget>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        width: widget.controller._calculateDotsWidth(widget.visibleNum),
-        height: Dot.big.size.height,
-        child: ListView(
-          physics: const NeverScrollableScrollPhysics(),
-          scrollDirection: Axis.horizontal,
-          controller: scrollController,
-          children: List<Widget>.from(List.generate(widget.maxNum, (index) {
-            final curDot = indicatorDot(index, widget.controller.current);
-            final preDot = dots[index];
-            final double opacity;
-            final double sizeWidth;
-            if (preDot.opacity == curDot.opacity) {
-              // No need to redraw the dots
-              opacity = curDot.opacity;
-              sizeWidth = curDot.size.width;
-            } else {
-              // Need to redraw the dots
-              opacity = preDot.opacity +
-                  animation.value * (curDot.opacity - preDot.opacity);
-              sizeWidth = preDot.size.width +
-                  animation.value * (curDot.size.width - preDot.size.width);
-            }
-            if (animation.value >= 1) {
-              dots[index] = curDot;
-            }
-            return CustomPaint(
-              painter: IndicatorDotPainter(opacity),
-              size: Size(sizeWidth, sizeWidth),
-            );
-          }).toList().expand((e) => [e, SizedBox(width: widget.gap)]).toList()
-            ..removeLast()),
-        ));
+    return Builder(builder: (context) {
+      widget.controller._context = context;
+      return SizedBox(
+          width: widget.controller._calculateDotsWidth(widget.visibleNum),
+          height: Dot.big.size.height,
+          child: ListView(
+            physics: const NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            controller: scrollController,
+            children: List<Widget>.from(List.generate(widget.count, (index) {
+              final curDot = indicatorDot(index, widget.controller.current);
+              final preDot = dots[index];
+              final double opacity;
+              final double sizeWidth;
+              if (preDot.opacity == curDot.opacity) {
+                // No need to redraw the dots
+                opacity = curDot.opacity;
+                sizeWidth = curDot.size.width;
+              } else {
+                // Need to redraw the dots
+                opacity = preDot.opacity +
+                    animation.value * (curDot.opacity - preDot.opacity);
+                sizeWidth = preDot.size.width +
+                    animation.value * (curDot.size.width - preDot.size.width);
+              }
+              if (animation.value >= 1) {
+                dots[index] = curDot;
+              }
+              return CustomPaint(
+                painter: IndicatorDotPainter(opacity),
+                size: Size(sizeWidth, sizeWidth),
+              );
+            }).toList().expand((e) => [e, SizedBox(width: widget.gap)]).toList()
+              ..removeLast()),
+          ));
+    });
   }
 
   /// Draw a dot based on the current position
@@ -153,30 +109,33 @@ class DotIndicatorWidgetState extends State<DotIndicatorWidget>
 }
 
 class EasyDotIndicatorController {
-  late GlobalObjectKey _stateKey;
+  BuildContext? _context;
   int _current = 0;
 
   int get current => _current;
 
-  DotIndicatorWidgetState? get _requireDotIndicatorWidgetState =>
-      _stateKey.currentState as DotIndicatorWidgetState?;
+  _EasyDotIndicatorState? get _requireDotIndicatorWidgetState =>
+      _context?.findAncestorStateOfType<_EasyDotIndicatorState>();
 
   void updateIndex(int index) {
-    // ignore: invalid_use_of_protected_member
-    _stateKey.currentState?.setState(() {
-      final state = _requireDotIndicatorWidgetState;
-      if (state == null) return;
-      if (_current != index) {
-        if (state.controller.isAnimating) {
-          state.controller.stop(canceled: true);
-        }
-        state.controller.reset();
-        state.controller.forward();
-        state.scrollController.animateTo(_calculateScrollOffset(index),
-            duration: const Duration(milliseconds: 150), curve: Curves.linear);
+    final state = _requireDotIndicatorWidgetState;
+    if (state == null) return;
+    if (_current != index) {
+      if (state.animController.isAnimating) {
+        state.animController.stop(canceled: true);
       }
-      _current = index;
-    });
+      state.animController.reset();
+      state.animController.forward();
+      // ignore: invalid_use_of_protected_member
+      state.setState(() {
+        state.scrollController.animateTo(
+          _calculateScrollOffset(index),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.linear,
+        );
+      });
+    }
+    _current = index;
   }
 
   /// Calculate indicator scroll offset
@@ -199,11 +158,11 @@ class EasyDotIndicatorController {
       double offset = move * gap +
           moveSmall * Dot.small.size.width +
           moveMiddle * Dot.middle.size.width;
-      if (index >= state.widget.maxNum - side) {
+      if (index >= state.widget.count - side) {
         // Avoid overScroll exception
         offset = min(
             offset,
-            _calculateDotsWidth(state.widget.maxNum) -
+            _calculateDotsWidth(state.widget.count) -
                 _calculateDotsWidth(state.widget.visibleNum));
       }
       return offset;
@@ -216,7 +175,6 @@ class EasyDotIndicatorController {
     if (state == null) return 0;
     double gap = state.widget.gap;
     count = max(count, 0);
-    print('EasyDotIndicatorController._calculateDotsWidth count=$count');
     if (count < 1) {
       return 0;
     } else if (count < 3) {
