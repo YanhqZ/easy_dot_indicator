@@ -13,7 +13,7 @@ class EasyDotIndicator extends StatefulWidget {
   final int count;
 
   /// Controller, providing external modification status
-  final DotIndicatorController controller;
+  final EasyDotIndicatorController controller;
 
   /// Dot gap
   final double gap;
@@ -63,7 +63,7 @@ class DotIndicatorWidget extends StatefulWidget {
   final int visibleNum;
   final int maxNum;
   final double gap;
-  final DotIndicatorController controller;
+  final EasyDotIndicatorController controller;
 
   const DotIndicatorWidget({
     required this.visibleNum,
@@ -152,7 +152,7 @@ class DotIndicatorWidgetState extends State<DotIndicatorWidget>
   }
 }
 
-class DotIndicatorController {
+class EasyDotIndicatorController {
   late GlobalObjectKey _stateKey;
   int _current = 0;
 
@@ -216,6 +216,7 @@ class DotIndicatorController {
     if (state == null) return 0;
     double gap = state.widget.gap;
     count = max(count, 0);
+    print('EasyDotIndicatorController._calculateDotsWidth count=$count');
     if (count < 1) {
       return 0;
     } else if (count < 3) {
