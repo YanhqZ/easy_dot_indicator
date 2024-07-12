@@ -5,25 +5,39 @@ enum Dot { big, middle, small }
 
 class DotStyle {
   final double opacity;
-  final double size;
+  final Size size;
   final Color color;
 
   const DotStyle({
-    required this.opacity,
+    this.opacity = 1,
     required this.size,
-    required this.color,
+    this.color = Colors.white,
   });
 }
 
-class EasyDotIndicatorDotConfig {
+typedef CustomDotBuilder = Widget Function(
+  Animation<double> anim,
+  Dot cur,
+  Dot pre,
+);
+
+class EasyDotIndicatorCustomConfig {
   final DotStyle big;
   final DotStyle middle;
   final DotStyle small;
+  final double gap;
+  final Duration animDuration;
+  final Curve animCurve;
+  final CustomDotBuilder? customDotBuilder;
 
-  const EasyDotIndicatorDotConfig({
-    this.big = const DotStyle(opacity: 1.0, size: 8, color: Colors.white),
-    this.middle = const DotStyle(opacity: 0.8, size: 6, color: Colors.white),
-    this.small = const DotStyle(opacity: 0.6, size: 4, color: Colors.white),
+  const EasyDotIndicatorCustomConfig({
+    this.big = const DotStyle(opacity: 1.0, size: Size.square(8), color: Colors.white),
+    this.middle = const DotStyle(opacity: 0.8, size: Size.square(6), color: Colors.white),
+    this.small = const DotStyle(opacity: 0.6, size: Size.square(4), color: Colors.white),
+    this.gap = 6,
+    this.animDuration = const Duration(milliseconds: 150),
+    this.animCurve = Curves.linear,
+    this.customDotBuilder,
   });
 
   DotStyle style(Dot dot) {

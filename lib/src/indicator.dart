@@ -15,17 +15,13 @@ class EasyDotIndicator extends StatefulWidget {
   /// Controller, providing external modification status
   final EasyDotIndicatorController controller;
 
-  /// Dot gap
-  final double gap;
-
-  final EasyDotIndicatorDotConfig dotConfig;
+  final EasyDotIndicatorCustomConfig dotConfig;
 
   const EasyDotIndicator({
     required this.visibleNum,
     required this.count,
     required this.controller,
-    this.dotConfig = const EasyDotIndicatorDotConfig(),
-    this.gap = 6,
+    this.dotConfig = const EasyDotIndicatorCustomConfig(),
     super.key,
   });
 
@@ -62,8 +58,11 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     dots = List.generate(
         widget.count, (index) => indicatorDot(index, controller.current));
     animController = AnimationController(
-        duration: const Duration(milliseconds: 150), vsync: this);
-    animation = Tween<double>(begin: 0, end: 1).animate(animController)
+        duration: widget.dotConfig.animDuration, vsync: this);
+    animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+      parent: animController,
+      curve: widget.dotConfig.animCurve,
+    ))
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           // when the animation is completed, adjust the width and scroll offset.
@@ -101,8 +100,8 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         // Update the scroll offset
         scrollController.animateTo(
           _calculateScrollOffset(index),
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.linear,
+          duration: widget.dotConfig.animDuration,
+          curve: widget.dotConfig.animCurve,
         );
         current = index;
       }
@@ -113,23 +112,23 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   double _calculateIndicatorWidth(int index) {
     final count = widget.count;
     final visibleNum = widget.visibleNum;
-    final gap = widget.gap;
+    final gap = widget.dotConfig.gap;
     if (count < 1) {
       return 0;
     } else if (count < 3) {
-      return widget.dotConfig.big.size +
-          widget.dotConfig.middle.size * (visibleNum - 1) +
+      return widget.dotConfig.big.size.width +
+          widget.dotConfig.middle.size.width * (visibleNum - 1) +
           (visibleNum - 1) * gap;
     } else {
       if (index == count - 1 || index == 0) {
-        return widget.dotConfig.big.size +
-            widget.dotConfig.middle.size * 1 +
-            widget.dotConfig.small.size * (visibleNum - 1 - 1) +
+        return widget.dotConfig.big.size.width +
+            widget.dotConfig.middle.size.width * 1 +
+            widget.dotConfig.small.size.width * (visibleNum - 1 - 1) +
             (visibleNum - 1) * gap;
       } else {
-        return widget.dotConfig.big.size +
-            widget.dotConfig.middle.size * 2 +
-            widget.dotConfig.small.size * (visibleNum - 1 - 2) +
+        return widget.dotConfig.big.size.width +
+            widget.dotConfig.middle.size.width * 2 +
+            widget.dotConfig.small.size.width * (visibleNum - 1 - 2) +
             (visibleNum - 1) * gap;
       }
     }
@@ -148,10 +147,11 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     } else {
       return scrollController.position.maxScrollExtent;
     }
-    final gap = widget.gap;
+    final gap = widget.dotConfig.gap;
     List<Dot> dots =
         List.generate(leftInvisibleDotNum, (i) => indicatorDot(i, index));
-    return dots.fold(0.0, (pre, e) => pre + widget.dotConfig.style(e).size) +
+    return dots.fold(
+            0.0, (pre, e) => pre + widget.dotConfig.style(e).size.width) +
         dots.length * gap;
   }
 
@@ -164,9 +164,10 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
       return ValueListenableBuilder(
         valueListenable: widthNotifier,
         builder: (context, width, child) {
-          return SizedBox(
+          return Container(
+            alignment: Alignment.center,
             width: width,
-            height: widget.dotConfig.big.size,
+            height: widget.dotConfig.big.size.height,
             child: child,
           );
         },
@@ -180,12 +181,24 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
               children: List<Widget>.from(List.generate(widget.count, (index) {
                 return AnimatedBuilder(
                   animation: animation,
-                  builder: (BuildContext context, child) {
+                  builder: (BuildContext context, _) {
+                    final preDot = dots[index];
                     final curDot = indicatorDot(index, current);
+                    if (animation.value >= 1) {
+                      dots[index] = curDot;
+                    }
+                    if (widget.dotConfig.customDotBuilder != null) {
+                      return widget.dotConfig.customDotBuilder!(
+                        animation,
+                        indicatorDot(index, current),
+                        preDot,
+                      );
+                    }
+
                     final cur = widget.dotConfig.style(curDot);
-                    final pre = widget.dotConfig.style(dots[index]);
+                    final pre = widget.dotConfig.style(preDot);
                     final double opacity;
-                    final double size;
+                    final Size size;
                     if (pre.opacity == cur.opacity) {
                       // No need to redraw the dots
                       opacity = cur.opacity;
@@ -194,21 +207,25 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
                       // Need to redraw the dots
                       opacity = pre.opacity +
                           animation.value * (cur.opacity - pre.opacity);
-                      size = pre.size + animation.value * (cur.size - pre.size);
+                      size = Size(
+                          pre.size.width +
+                              animation.value *
+                                  (cur.size.width - pre.size.width),
+                          pre.size.height +
+                              animation.value *
+                                  (cur.size.height - pre.size.height));
                     }
-                    if (animation.value >= 1) {
-                      dots[index] = curDot;
-                    }
+
                     return CustomPaint(
                       painter:
                           IndicatorDotPainter(cur.color.withOpacity(opacity)),
-                      size: Size(size, size),
+                      size: size,
                     );
                   },
                 );
               })
                   .toList()
-                  .expand((e) => [e, SizedBox(width: widget.gap)])
+                  .expand((e) => [e, SizedBox(width: widget.dotConfig.gap)])
                   .toList()
                 ..removeLast()),
             ),

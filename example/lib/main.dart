@@ -1,4 +1,5 @@
 import 'package:easy_dot_indicator/easy_dot_indicator.dart';
+import 'package:example/widget/custom_dot_example.dart';
 import 'package:flutter/material.dart';
 
 import 'widget/carousel_slider_example.dart';
@@ -53,6 +54,11 @@ class _DemoPageState extends State<DemoPage> {
           Align(
             alignment: Alignment.center,
             child: CarouselSliderExample(),
+          ),
+          SizedBox(height: 20),
+          Align(
+            alignment: Alignment.center,
+            child: CustomDotExample(),
           ),
         ],
       ),

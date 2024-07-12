@@ -47,10 +47,10 @@ class _CarouselSliderExampleState extends State<CarouselSliderExample> {
                 visibleNum: 5,
                 count: 10,
                 controller: indicatorController,
-                dotConfig: const EasyDotIndicatorDotConfig(
-                  big: DotStyle(opacity: 1, size: 14, color: Colors.blue),
-                  middle: DotStyle(opacity: 0.85, size: 10, color: Colors.blue),
-                  small: DotStyle(opacity: 0.7, size: 6, color: Colors.blue),
+                dotConfig: const EasyDotIndicatorCustomConfig(
+                  big: DotStyle(opacity: 1, size: Size.square(14), color: Colors.blue),
+                  middle: DotStyle(opacity: 0.85, size: Size.square(10), color: Colors.blue),
+                  small: DotStyle(opacity: 0.7, size: Size.square(6), color: Colors.blue),
                 )),
           ),
         ],
