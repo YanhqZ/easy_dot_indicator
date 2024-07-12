@@ -18,10 +18,13 @@ class EasyDotIndicator extends StatefulWidget {
   /// Dot gap
   final double gap;
 
+  final EasyDotIndicatorDotConfig dotConfig;
+
   const EasyDotIndicator({
     required this.visibleNum,
     required this.count,
     required this.controller,
+    this.dotConfig = const EasyDotIndicatorDotConfig(),
     this.gap = 6,
     super.key,
   });
@@ -114,19 +117,19 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     if (count < 1) {
       return 0;
     } else if (count < 3) {
-      return Dot.big.size.width +
-          Dot.middle.size.width * (visibleNum - 1) +
+      return widget.dotConfig.big.size +
+          widget.dotConfig.middle.size * (visibleNum - 1) +
           (visibleNum - 1) * gap;
     } else {
       if (index == count - 1 || index == 0) {
-        return Dot.big.size.width +
-            Dot.middle.size.width * 1 +
-            Dot.small.size.width * (visibleNum - 1 - 1) +
+        return widget.dotConfig.big.size +
+            widget.dotConfig.middle.size * 1 +
+            widget.dotConfig.small.size * (visibleNum - 1 - 1) +
             (visibleNum - 1) * gap;
       } else {
-        return Dot.big.size.width +
-            Dot.middle.size.width * 2 +
-            Dot.small.size.width * (visibleNum - 1 - 2) +
+        return widget.dotConfig.big.size +
+            widget.dotConfig.middle.size * 2 +
+            widget.dotConfig.small.size * (visibleNum - 1 - 2) +
             (visibleNum - 1) * gap;
       }
     }
@@ -148,8 +151,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     final gap = widget.gap;
     List<Dot> dots =
         List.generate(leftInvisibleDotNum, (i) => indicatorDot(i, index));
-    return dots.fold(0.0,
-            (previousValue, element) => previousValue + element.size.width) +
+    return dots.fold(0.0, (pre, e) => pre + widget.dotConfig.style(e).size) +
         dots.length * gap;
   }
 
@@ -164,7 +166,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         builder: (context, width, child) {
           return SizedBox(
             width: width,
-            height: Dot.big.size.height,
+            height: widget.dotConfig.big.size,
             child: child,
           );
         },
@@ -180,27 +182,27 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
                   animation: animation,
                   builder: (BuildContext context, child) {
                     final curDot = indicatorDot(index, current);
-                    final preDot = dots[index];
+                    final cur = widget.dotConfig.style(curDot);
+                    final pre = widget.dotConfig.style(dots[index]);
                     final double opacity;
-                    final double sizeWidth;
-                    if (preDot.opacity == curDot.opacity) {
+                    final double size;
+                    if (pre.opacity == cur.opacity) {
                       // No need to redraw the dots
-                      opacity = curDot.opacity;
-                      sizeWidth = curDot.size.width;
+                      opacity = cur.opacity;
+                      size = cur.size;
                     } else {
                       // Need to redraw the dots
-                      opacity = preDot.opacity +
-                          animation.value * (curDot.opacity - preDot.opacity);
-                      sizeWidth = preDot.size.width +
-                          animation.value *
-                              (curDot.size.width - preDot.size.width);
+                      opacity = pre.opacity +
+                          animation.value * (cur.opacity - pre.opacity);
+                      size = pre.size + animation.value * (cur.size - pre.size);
                     }
                     if (animation.value >= 1) {
                       dots[index] = curDot;
                     }
                     return CustomPaint(
-                      painter: IndicatorDotPainter(opacity),
-                      size: Size(sizeWidth, sizeWidth),
+                      painter:
+                          IndicatorDotPainter(cur.color.withOpacity(opacity)),
+                      size: Size(size, size),
                     );
                   },
                 );

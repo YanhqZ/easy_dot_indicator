@@ -3,35 +3,50 @@ import 'package:flutter/material.dart';
 /// Dot style
 enum Dot { big, middle, small }
 
-extension DotExt on Dot {
-  double get opacity => _dotOpacities[this]!;
+class DotStyle {
+  final double opacity;
+  final double size;
+  final Color color;
 
-  Size get size => _dotSize[this]!;
+  const DotStyle({
+    required this.opacity,
+    required this.size,
+    required this.color,
+  });
 }
 
-const _dotOpacities = {
-  Dot.big: 1.0,
-  Dot.middle: 0.8,
-  Dot.small: 0.6,
-};
+class EasyDotIndicatorDotConfig {
+  final DotStyle big;
+  final DotStyle middle;
+  final DotStyle small;
 
-final _dotSize = {
-  Dot.big: const Size(8, 8),
-  Dot.middle: const Size(6, 6),
-  Dot.small: const Size(4, 4),
-};
+  const EasyDotIndicatorDotConfig({
+    this.big = const DotStyle(opacity: 1.0, size: 8, color: Colors.white),
+    this.middle = const DotStyle(opacity: 0.8, size: 6, color: Colors.white),
+    this.small = const DotStyle(opacity: 0.6, size: 4, color: Colors.white),
+  });
+
+  DotStyle style(Dot dot) {
+    return switch (dot) {
+      Dot.big => big,
+      Dot.middle => middle,
+      Dot.small => small,
+    };
+  }
+}
 
 class IndicatorDotPainter extends CustomPainter {
-  late final double _opacity;
+  final Color _color;
 
-  IndicatorDotPainter(double opacity) {
-    _opacity = opacity;
-  }
+  IndicatorDotPainter(Color color) : _color = color;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width / 2,
-        Paint()..color = Colors.white.withOpacity(_opacity));
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width / 2,
+      Paint()..color = _color,
+    );
   }
 
   @override

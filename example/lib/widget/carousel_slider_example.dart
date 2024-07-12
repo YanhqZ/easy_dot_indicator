@@ -26,7 +26,7 @@ class _CarouselSliderExampleState extends State<CarouselSliderExample> {
                 10,
                 (index) => Container(
                   alignment: Alignment.center,
-                  color: index.isEven ? Colors.blue : Colors.red,
+                  color: Colors.grey,
                   child: Text(
                     'CarouselSlider:Item$index',
                     style: const TextStyle(fontSize: 24, color: Colors.white),
@@ -44,10 +44,14 @@ class _CarouselSliderExampleState extends State<CarouselSliderExample> {
           Positioned(
             bottom: 10,
             child: EasyDotIndicator(
-              visibleNum: 5,
-              count: 10,
-              controller: indicatorController,
-            ),
+                visibleNum: 5,
+                count: 10,
+                controller: indicatorController,
+                dotConfig: const EasyDotIndicatorDotConfig(
+                  big: DotStyle(opacity: 1, size: 14, color: Colors.blue),
+                  middle: DotStyle(opacity: 0.85, size: 10, color: Colors.blue),
+                  small: DotStyle(opacity: 0.7, size: 6, color: Colors.blue),
+                )),
           ),
         ],
       ),
