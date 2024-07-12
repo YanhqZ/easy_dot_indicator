@@ -1,6 +1,9 @@
 import 'package:easy_dot_indicator/easy_dot_indicator.dart';
 import 'package:flutter/material.dart';
 
+import 'widget/carousel_slider_example.dart';
+import 'widget/page_view_example.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -28,7 +31,6 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
-  final PageController _pageController = PageController();
   EasyDotIndicatorController indicatorController = EasyDotIndicatorController();
 
   @override
@@ -38,51 +40,22 @@ class _DemoPageState extends State<DemoPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('EasyDotIndicator Demo'),
       ),
-      body: Center(
-        child: SizedBox(
-          width: 300,
-          height: 200,
-          child: Stack(
+      body: const Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Align(
             alignment: Alignment.center,
-            children: <Widget>[
-              Positioned.fill(
-                child: PageView.builder(
-                  itemBuilder: (_, index) => Container(
-                    alignment: Alignment.center,
-                    color: index.isEven ? Colors.blue : Colors.red,
-                    child: Text(
-                      'Page $index',
-                      style: const TextStyle(fontSize: 32, color: Colors.white),
-                    ),
-                  ),
-                  controller: _pageController,
-                  itemCount: 10,
-                  onPageChanged: (index) {
-                    indicatorController.updateIndex(index);
-                  },
-                ),
-              ),
-              Positioned(
-                bottom: 10,
-                child: EasyDotIndicator(
-                  visibleNum: 5,
-                  count: 10,
-                  controller: indicatorController,
-                ),
-              ),
-            ],
+            child: PageViewExample(),
           ),
-        ),
+          SizedBox(height: 20),
+          Align(
+            alignment: Alignment.center,
+            child: CarouselSliderExample(),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _pageController.nextPage(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.linear);
-        },
-        tooltip: 'Next',
-        child: const Icon(Icons.navigate_next_rounded),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
