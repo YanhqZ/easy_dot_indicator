@@ -32,14 +32,6 @@ class _DemoPageState extends State<DemoPage> {
   EasyDotIndicatorController indicatorController = EasyDotIndicatorController();
 
   @override
-  void initState() {
-    super.initState();
-    _pageController.addListener(() {
-      indicatorController.updateIndex(_pageController.page!.toInt());
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -65,6 +57,9 @@ class _DemoPageState extends State<DemoPage> {
                   ),
                   controller: _pageController,
                   itemCount: 10,
+                  onPageChanged: (index) {
+                    indicatorController.updateIndex(index);
+                  },
                 ),
               ),
               Positioned(

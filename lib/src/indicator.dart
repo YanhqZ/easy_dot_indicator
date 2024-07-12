@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import 'dot.dart';
@@ -36,39 +34,141 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   late List<Dot> dots;
   late Animation<double> animation;
   late AnimationController animController;
+  final ValueNotifier<double> widthNotifier = ValueNotifier<double>(0);
+  int current = 0;
+  int pending = 0;
+  double pendingWidthDiff = 0;
 
   /// The number of dots that can be displayed to the left or right of the current dot
-  late int sideDotNum;
+  late int leftDotNum;
+  late int rightDotNum;
+
+  EasyDotIndicatorController get controller => widget.controller;
 
   @override
   void initState() {
     super.initState();
     scrollController = ScrollController();
-    sideDotNum = (widget.visibleNum - 1) ~/ 2;
-    dots = List.generate(widget.count,
-        (index) => indicatorDot(index, widget.controller.current));
+    if (!widget.visibleNum.isEven) {
+      leftDotNum = rightDotNum = (widget.visibleNum - 1) ~/ 2;
+    } else {
+      leftDotNum = widget.visibleNum ~/ 2;
+      rightDotNum = widget.visibleNum ~/ 2 - 1;
+    }
+    dots = List.generate(
+        widget.count, (index) => indicatorDot(index, controller.current));
     animController = AnimationController(
         duration: const Duration(milliseconds: 150), vsync: this);
     animation = Tween<double>(begin: 0, end: 1).animate(animController)
       ..addListener(() {
         if (!mounted) return;
         setState(() {});
+      })
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          // when the animation is completed, adjust the width and scroll offset.
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            widthNotifier.value = _calculateIndicatorWidth(current);
+            scrollController.jumpTo(_calculateScrollOffset(current));
+          });
+        }
       });
+  }
+
+  /// Update the current dot index
+  void updateIndex(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      pending = index;
+      if (current != pending) {
+        if (animController.isAnimating) {
+          animController.stop(canceled: true);
+        }
+        pendingWidthDiff = _calculateIndicatorWidth(pending) -
+            _calculateIndicatorWidth(current);
+        if (pendingWidthDiff > 0) {
+          widthNotifier.value = _calculateIndicatorWidth(pending);
+        }
+        animController.reset();
+        animController.forward();
+
+        // ignore: invalid_use_of_protected_member
+        scrollController.animateTo(
+          _calculateScrollOffset(index),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.linear,
+        );
+        current = index;
+      }
+    });
+  }
+
+  /// Calculate indicator width according to the [count] of dots
+  double _calculateIndicatorWidth(int index) {
+    final count = widget.count;
+    final visibleNum = widget.visibleNum;
+    final gap = widget.gap;
+    if (count < 1) {
+      return 0;
+    } else if (count < 3) {
+      return Dot.big.size.width +
+          Dot.middle.size.width * (visibleNum - 1) +
+          (visibleNum - 1) * gap;
+    } else {
+      if (index == count - 1 || index == 0) {
+        return Dot.big.size.width +
+            Dot.middle.size.width * 1 +
+            Dot.small.size.width * (visibleNum - 1 - 1) +
+            (visibleNum - 1) * gap;
+      } else {
+        return Dot.big.size.width +
+            Dot.middle.size.width * 2 +
+            Dot.small.size.width * (visibleNum - 1 - 2) +
+            (visibleNum - 1) * gap;
+      }
+    }
+  }
+
+  /// Calculate indicator scroll offset
+  double _calculateScrollOffset(int index) {
+    int leftInvisibleDotNum = 0;
+    if (index <= leftDotNum) {
+      leftInvisibleDotNum = 0;
+    } else if (index < widget.count - widget.visibleNum + leftDotNum) {
+      leftInvisibleDotNum = index - leftDotNum;
+    } else {
+      leftInvisibleDotNum = widget.count - widget.visibleNum;
+    }
+    final gap = widget.gap;
+    List<Dot> dots = List.generate(leftInvisibleDotNum,
+        (index) => indicatorDot(index, controller.current));
+
+    return dots.fold(0.0,
+            (previousValue, element) => previousValue + element.size.width) +
+        dots.length * gap;
   }
 
   @override
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
-      widget.controller._context = context;
-      return SizedBox(
-          width: widget.controller._calculateDotsWidth(widget.visibleNum),
-          height: Dot.big.size.height,
+      controller._context = context;
+      return ValueListenableBuilder(
+        valueListenable: widthNotifier,
+        builder: (context, width, child) {
+          return Container(
+            color: Colors.black,
+            width: width,
+            height: Dot.big.size.height,
+            child: child,
+          );
+        },
+        child: ScrollConfiguration(
+          behavior: const ScrollBehavior().copyWith(overscroll: false),
           child: ListView(
             physics: const NeverScrollableScrollPhysics(),
             scrollDirection: Axis.horizontal,
             controller: scrollController,
             children: List<Widget>.from(List.generate(widget.count, (index) {
-              final curDot = indicatorDot(index, widget.controller.current);
+              final curDot = indicatorDot(index, current);
               final preDot = dots[index];
               final double opacity;
               final double sizeWidth;
@@ -92,7 +192,9 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
               );
             }).toList().expand((e) => [e, SizedBox(width: widget.gap)]).toList()
               ..removeLast()),
-          ));
+          ),
+        ),
+      );
     });
   }
 
@@ -108,84 +210,20 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   }
 }
 
+/// Controller for controlling the status of the dot indicator
 class EasyDotIndicatorController {
   BuildContext? _context;
-  int _current = 0;
 
-  int get current => _current;
+  int get current => _accessDotIndicatorWidgetState?.current ?? 0;
 
-  _EasyDotIndicatorState? get _requireDotIndicatorWidgetState =>
-      _context?.findAncestorStateOfType<_EasyDotIndicatorState>();
+  _EasyDotIndicatorState? get _accessDotIndicatorWidgetState =>
+      _context?.mounted == true
+          ? _context?.findAncestorStateOfType<_EasyDotIndicatorState>()
+          : null;
 
   void updateIndex(int index) {
-    final state = _requireDotIndicatorWidgetState;
+    final state = _accessDotIndicatorWidgetState;
     if (state == null) return;
-    if (_current != index) {
-      if (state.animController.isAnimating) {
-        state.animController.stop(canceled: true);
-      }
-      state.animController.reset();
-      state.animController.forward();
-      // ignore: invalid_use_of_protected_member
-      state.setState(() {
-        state.scrollController.animateTo(
-          _calculateScrollOffset(index),
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.linear,
-        );
-      });
-    }
-    _current = index;
-  }
-
-  /// Calculate indicator scroll offset
-  double _calculateScrollOffset(int index) {
-    final state = _requireDotIndicatorWidgetState;
-    if (state == null) return 0;
-    index = index + 1;
-    double gap = state.widget.gap;
-    int side = state.sideDotNum;
-    if (index <= side + 1) {
-      return 0;
-    } else {
-      // Num of dot to be moved
-      int move = index - side - 1;
-      // Num of mid dot that needs to be moved
-      int moveMiddle = side < 2 ? 1 : 0;
-      // Num of  small dot that need to be moved
-      int moveSmall = move >= 0 ? move - moveMiddle : 0;
-      //The offset that needs to be moved
-      double offset = move * gap +
-          moveSmall * Dot.small.size.width +
-          moveMiddle * Dot.middle.size.width;
-      if (index >= state.widget.count - side) {
-        // Avoid overScroll exception
-        offset = min(
-            offset,
-            _calculateDotsWidth(state.widget.count) -
-                _calculateDotsWidth(state.widget.visibleNum));
-      }
-      return offset;
-    }
-  }
-
-  /// Calculate indicator width according to the [count] of dots
-  double _calculateDotsWidth(int count) {
-    final state = _requireDotIndicatorWidgetState;
-    if (state == null) return 0;
-    double gap = state.widget.gap;
-    count = max(count, 0);
-    if (count < 1) {
-      return 0;
-    } else if (count < 3) {
-      return Dot.big.size.width +
-          Dot.middle.size.width * (count - 1) +
-          (count - 1) * gap;
-    } else {
-      return Dot.big.size.width +
-          Dot.middle.size.width * 2 +
-          Dot.small.size.width * (count - 1 - 2) +
-          (count - 1) * gap;
-    }
+    state.updateIndex(index);
   }
 }
