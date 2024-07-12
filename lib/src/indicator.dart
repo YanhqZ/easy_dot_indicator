@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import 'dot.dart';
@@ -37,7 +39,6 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   final ValueNotifier<double> widthNotifier = ValueNotifier<double>(0);
   int current = 0;
   int pending = 0;
-  double pendingWidthDiff = 0;
 
   /// The number of dots that can be displayed to the left or right of the current dot
   late int leftDotNum;
@@ -60,19 +61,21 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     animController = AnimationController(
         duration: const Duration(milliseconds: 150), vsync: this);
     animation = Tween<double>(begin: 0, end: 1).animate(animController)
-      ..addListener(() {
-        if (!mounted) return;
-        setState(() {});
-      })
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           // when the animation is completed, adjust the width and scroll offset.
           WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            widthNotifier.value = _calculateIndicatorWidth(current);
+            // widthNotifier.value = _calculateIndicatorWidth(current);
             scrollController.jumpTo(_calculateScrollOffset(current));
           });
         }
       });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    animController.dispose();
   }
 
   /// Update the current dot index
@@ -83,15 +86,16 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         if (animController.isAnimating) {
           animController.stop(canceled: true);
         }
-        pendingWidthDiff = _calculateIndicatorWidth(pending) -
-            _calculateIndicatorWidth(current);
-        if (pendingWidthDiff > 0) {
-          widthNotifier.value = _calculateIndicatorWidth(pending);
-        }
+        // Calculate the bigger width between the current and pending and update UI
+        // to promise the dot can be displayed completely during the animation
+        widthNotifier.value = max(
+          _calculateIndicatorWidth(pending),
+          _calculateIndicatorWidth(current),
+        );
+        // Start animation
         animController.reset();
         animController.forward();
-
-        // ignore: invalid_use_of_protected_member
+        // Update the scroll offset
         scrollController.animateTo(
           _calculateScrollOffset(index),
           duration: const Duration(milliseconds: 150),
@@ -130,18 +134,20 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
 
   /// Calculate indicator scroll offset
   double _calculateScrollOffset(int index) {
+    // Calculate the number of invisible dots to the left of the indicator
     int leftInvisibleDotNum = 0;
     if (index <= leftDotNum) {
       leftInvisibleDotNum = 0;
-    } else if (index < widget.count - widget.visibleNum + leftDotNum) {
+    } else if (index <= widget.count - widget.visibleNum + leftDotNum) {
       leftInvisibleDotNum = index - leftDotNum;
-    } else {
+    } else if (index < widget.count - 1) {
       leftInvisibleDotNum = widget.count - widget.visibleNum;
+    } else {
+      return scrollController.position.maxScrollExtent;
     }
     final gap = widget.gap;
-    List<Dot> dots = List.generate(leftInvisibleDotNum,
-        (index) => indicatorDot(index, controller.current));
-
+    List<Dot> dots =
+        List.generate(leftInvisibleDotNum, (i) => indicatorDot(i, index));
     return dots.fold(0.0,
             (previousValue, element) => previousValue + element.size.width) +
         dots.length * gap;
@@ -151,11 +157,12 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
       controller._context = context;
+      // Update the width of the indicator when the context injected
+      widthNotifier.value = _calculateIndicatorWidth(pending);
       return ValueListenableBuilder(
         valueListenable: widthNotifier,
         builder: (context, width, child) {
-          return Container(
-            color: Colors.black,
+          return SizedBox(
             width: width,
             height: Dot.big.size.height,
             child: child,
@@ -163,35 +170,46 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         },
         child: ScrollConfiguration(
           behavior: const ScrollBehavior().copyWith(overscroll: false),
-          child: ListView(
-            physics: const NeverScrollableScrollPhysics(),
-            scrollDirection: Axis.horizontal,
-            controller: scrollController,
-            children: List<Widget>.from(List.generate(widget.count, (index) {
-              final curDot = indicatorDot(index, current);
-              final preDot = dots[index];
-              final double opacity;
-              final double sizeWidth;
-              if (preDot.opacity == curDot.opacity) {
-                // No need to redraw the dots
-                opacity = curDot.opacity;
-                sizeWidth = curDot.size.width;
-              } else {
-                // Need to redraw the dots
-                opacity = preDot.opacity +
-                    animation.value * (curDot.opacity - preDot.opacity);
-                sizeWidth = preDot.size.width +
-                    animation.value * (curDot.size.width - preDot.size.width);
-              }
-              if (animation.value >= 1) {
-                dots[index] = curDot;
-              }
-              return CustomPaint(
-                painter: IndicatorDotPainter(opacity),
-                size: Size(sizeWidth, sizeWidth),
-              );
-            }).toList().expand((e) => [e, SizedBox(width: widget.gap)]).toList()
-              ..removeLast()),
+          child: IgnorePointer(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              scrollDirection: Axis.horizontal,
+              controller: scrollController,
+              children: List<Widget>.from(List.generate(widget.count, (index) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, child) {
+                    final curDot = indicatorDot(index, current);
+                    final preDot = dots[index];
+                    final double opacity;
+                    final double sizeWidth;
+                    if (preDot.opacity == curDot.opacity) {
+                      // No need to redraw the dots
+                      opacity = curDot.opacity;
+                      sizeWidth = curDot.size.width;
+                    } else {
+                      // Need to redraw the dots
+                      opacity = preDot.opacity +
+                          animation.value * (curDot.opacity - preDot.opacity);
+                      sizeWidth = preDot.size.width +
+                          animation.value *
+                              (curDot.size.width - preDot.size.width);
+                    }
+                    if (animation.value >= 1) {
+                      dots[index] = curDot;
+                    }
+                    return CustomPaint(
+                      painter: IndicatorDotPainter(opacity),
+                      size: Size(sizeWidth, sizeWidth),
+                    );
+                  },
+                );
+              })
+                  .toList()
+                  .expand((e) => [e, SizedBox(width: widget.gap)])
+                  .toList()
+                ..removeLast()),
+            ),
           ),
         ),
       );
