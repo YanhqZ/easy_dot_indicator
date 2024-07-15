@@ -2,9 +2,9 @@
 
 A simple dot-style indicator Flutter widget.
 
-![image](https://github.com/yanhq0719/img/blob/master/blob/easy_dot_indicator/img1.gif)
+![image](https://github.com/YanhqZ/img/blob/master/blob/easy_dot_indicator/img1.gif)
 
-![image](https://github.com/yanhq0719/img/blob/master/blob/easy_dot_indicator/img2.gif)
+![image](https://github.com/YanhqZ/img/blob/master/blob/easy_dot_indicator/img2.gif)
 
 ## Getting Started
 
@@ -24,7 +24,7 @@ class _PageViewExampleState extends State<PageViewExample> {
         children: <Widget>[
           Positioned.fill(
             child: PageView.builder(
-              itemBuilder: (_, index) => ...,
+              // itemBuilder: (_, index) => ...,
               itemCount: 10,
               onPageChanged: (index) {
                 indicatorController.updateIndex(index);
