@@ -31,9 +31,21 @@ class EasyDotIndicatorCustomConfig {
   final CustomDotBuilder? customDotBuilder;
 
   const EasyDotIndicatorCustomConfig({
-    this.big = const DotStyle(opacity: 1.0, size: Size.square(8), color: Colors.white),
-    this.middle = const DotStyle(opacity: 0.8, size: Size.square(6), color: Colors.white),
-    this.small = const DotStyle(opacity: 0.6, size: Size.square(4), color: Colors.white),
+    this.big = const DotStyle(
+      opacity: 1.0,
+      size: Size.square(8),
+      color: Colors.white,
+    ),
+    this.middle = const DotStyle(
+      opacity: 0.8,
+      size: Size.square(6),
+      color: Colors.white,
+    ),
+    this.small = const DotStyle(
+      opacity: 0.6,
+      size: Size.square(4),
+      color: Colors.white,
+    ),
     this.gap = 6,
     this.animDuration = const Duration(milliseconds: 150),
     this.animCurve = Curves.linear,

@@ -1,3 +1,6 @@
+## 1.0.0+3
+* Improved the Pub Points.
+
 ## 1.0.0+2
 * Update Git Repository.
 
