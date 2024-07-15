@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:easy_dot_indicator/src/extension/list_ext.dart';
 import 'package:flutter/material.dart';
 
 import 'dot.dart';
@@ -15,6 +16,7 @@ class EasyDotIndicator extends StatefulWidget {
   /// Controller, providing external modification status
   final EasyDotIndicatorController controller;
 
+  /// Custom configuration
   final EasyDotIndicatorCustomConfig dotConfig;
 
   const EasyDotIndicator({
@@ -39,22 +41,12 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   int current = 0;
   int pending = 0;
 
-  /// The number of dots that can be displayed to the left or right of the current dot
-  late int leftDotNum;
-  late int rightDotNum;
-
   EasyDotIndicatorController get controller => widget.controller;
 
   @override
   void initState() {
     super.initState();
     scrollController = ScrollController();
-    if (!widget.visibleNum.isEven) {
-      leftDotNum = rightDotNum = (widget.visibleNum - 1) ~/ 2;
-    } else {
-      leftDotNum = widget.visibleNum ~/ 2;
-      rightDotNum = widget.visibleNum ~/ 2 - 1;
-    }
     dots = List.generate(
         widget.count, (index) => indicatorDot(index, controller.current));
     animController = AnimationController(
@@ -67,7 +59,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         if (status == AnimationStatus.completed) {
           // when the animation is completed, adjust the width and scroll offset.
           WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            // widthNotifier.value = _calculateIndicatorWidth(current);
+            widthNotifier.value = _calculateIndicatorWidth(current);
             scrollController.jumpTo(_calculateScrollOffset(current));
           });
         }
@@ -138,6 +130,10 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   double _calculateScrollOffset(int index) {
     // Calculate the number of invisible dots to the left of the indicator
     int leftInvisibleDotNum = 0;
+    // The number of dots to the left of the middle visible dot
+    final leftDotNum = widget.visibleNum.isEven
+        ? widget.visibleNum ~/ 2
+        : (widget.visibleNum - 1) ~/ 2;
     if (index <= leftDotNum) {
       leftInvisibleDotNum = 0;
     } else if (index <= widget.count - widget.visibleNum + leftDotNum) {
@@ -188,6 +184,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
                       dots[index] = curDot;
                     }
                     if (widget.dotConfig.customDotBuilder != null) {
+                      // Custom dot widget
                       return widget.dotConfig.customDotBuilder!(
                         animation,
                         indicatorDot(index, current),
@@ -197,24 +194,14 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
 
                     final cur = widget.dotConfig.style(curDot);
                     final pre = widget.dotConfig.style(preDot);
-                    final double opacity;
-                    final Size size;
-                    if (pre.opacity == cur.opacity) {
-                      // No need to redraw the dots
-                      opacity = cur.opacity;
-                      size = cur.size;
-                    } else {
-                      // Need to redraw the dots
-                      opacity = pre.opacity +
-                          animation.value * (cur.opacity - pre.opacity);
-                      size = Size(
-                          pre.size.width +
-                              animation.value *
-                                  (cur.size.width - pre.size.width),
-                          pre.size.height +
-                              animation.value *
-                                  (cur.size.height - pre.size.height));
-                    }
+                    final double opacity = pre.opacity +
+                        animation.value * (cur.opacity - pre.opacity);
+                    final Size size = Size(
+                      pre.size.width +
+                          animation.value * (cur.size.width - pre.size.width),
+                      pre.size.height +
+                          animation.value * (cur.size.height - pre.size.height),
+                    );
 
                     return CustomPaint(
                       painter:
@@ -223,11 +210,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
                     );
                   },
                 );
-              })
-                  .toList()
-                  .expand((e) => [e, SizedBox(width: widget.dotConfig.gap)])
-                  .toList()
-                ..removeLast()),
+              })).gap(SizedBox(width: widget.dotConfig.gap)),
             ),
           ),
         ),
@@ -258,6 +241,7 @@ class EasyDotIndicatorController {
           ? _context?.findAncestorStateOfType<_EasyDotIndicatorState>()
           : null;
 
+  /// Update the current dot index
   void updateIndex(int index) {
     final state = _accessDotIndicatorWidgetState;
     if (state == null) return;

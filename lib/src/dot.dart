@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Dot style
 enum Dot { big, middle, small }
 
+/// Dot style configuration
 class DotStyle {
   final double opacity;
   final Size size;
@@ -15,19 +16,37 @@ class DotStyle {
   });
 }
 
+/// Custom dot builder func
+/// [anim] Animation controller for dot transition
+/// [cur] Current dot
+/// [pre] Previous dot
 typedef CustomDotBuilder = Widget Function(
   Animation<double> anim,
   Dot cur,
   Dot pre,
 );
 
+/// Custom configuration for dot indicator
 class EasyDotIndicatorCustomConfig {
+  /// Big dot style
   final DotStyle big;
+
+  /// Middle dot style
   final DotStyle middle;
+
+  /// Small dot style
   final DotStyle small;
+
+  /// Gap between dots
   final double gap;
+
+  /// Animation duration
   final Duration animDuration;
+
+  /// Animation curve
   final Curve animCurve;
+
+  /// Custom dot builder
   final CustomDotBuilder? customDotBuilder;
 
   const EasyDotIndicatorCustomConfig({
@@ -61,6 +80,7 @@ class EasyDotIndicatorCustomConfig {
   }
 }
 
+/// Default painter for drawing indicator dot
 class IndicatorDotPainter extends CustomPainter {
   final Color _color;
 
