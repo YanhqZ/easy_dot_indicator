@@ -5,12 +5,10 @@ enum Dot { big, middle, small }
 
 /// Dot style configuration
 class DotStyle {
-  final double opacity;
   final Size size;
   final Color color;
 
   const DotStyle({
-    this.opacity = 1,
     required this.size,
     this.color = Colors.white,
   });
@@ -49,35 +47,32 @@ class EasyDotIndicatorCustomConfig {
   /// Custom dot builder
   final CustomDotBuilder? customDotBuilder;
 
+  /// inactive color, will override the color in [DotStyle]
+  final Color? inactiveColor;
+
+  /// active color, will override the color in [DotStyle]
+  final Color? activeColor;
+
   const EasyDotIndicatorCustomConfig({
     this.big = const DotStyle(
-      opacity: 1.0,
       size: Size.square(8),
-      color: Colors.white,
+      color: Color(0xFFFFFFFF),
     ),
     this.middle = const DotStyle(
-      opacity: 0.8,
       size: Size.square(6),
-      color: Colors.white,
+      color: Color(0xCCFFFFFF),
     ),
     this.small = const DotStyle(
-      opacity: 0.6,
       size: Size.square(4),
-      color: Colors.white,
+      color: Color(0x99FFFFFF),
     ),
     this.gap = 6,
     this.animDuration = const Duration(milliseconds: 150),
     this.animCurve = Curves.linear,
     this.customDotBuilder,
-  });
-
-  DotStyle style(Dot dot) {
-    return switch (dot) {
-      Dot.big => big,
-      Dot.middle => middle,
-      Dot.small => small,
-    };
-  }
+    this.inactiveColor,
+    this.activeColor,
+  }) : assert(!(inactiveColor != null) ^ (activeColor != null));
 }
 
 /// Default painter for drawing indicator dot

@@ -1,9 +1,8 @@
 import 'dart:math';
 
+import 'package:easy_dot_indicator/easy_dot_indicator.dart';
 import 'package:easy_dot_indicator/src/extension/list_ext.dart';
 import 'package:flutter/material.dart';
-
-import 'dot.dart';
 
 /// Dot indicator
 class EasyDotIndicator extends StatefulWidget {
@@ -57,9 +56,8 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     ))
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          // when the animation is completed, adjust the width and scroll offset.
+          // when the animation is completed, adjust the scroll offset.
           WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            widthNotifier.value = _calculateIndicatorWidth(current);
             scrollController.jumpTo(_calculateScrollOffset(current));
           });
         }
@@ -191,21 +189,18 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
                         preDot,
                       );
                     }
-
-                    final cur = widget.dotConfig.style(curDot);
-                    final pre = widget.dotConfig.style(preDot);
-                    final double opacity = pre.opacity +
-                        animation.value * (cur.opacity - pre.opacity);
-                    final Size size = Size(
-                      pre.size.width +
-                          animation.value * (cur.size.width - pre.size.width),
-                      pre.size.height +
-                          animation.value * (cur.size.height - pre.size.height),
+                    final Size size = widget.dotConfig.getSize(
+                      cur: curDot,
+                      pre: preDot,
+                      progress: animation.value,
                     );
-
+                    Color color = widget.dotConfig.getColor(
+                      cur: curDot,
+                      pre: preDot,
+                      progress: animation.value,
+                    );
                     return CustomPaint(
-                      painter:
-                          IndicatorDotPainter(cur.color.withOpacity(opacity)),
+                      painter: IndicatorDotPainter(color),
                       size: size,
                     );
                   },
