@@ -1,7 +1,7 @@
 name: easy_dot_indicator
 description: "A dot-style indicator widget which easy to use and supports customization. Especially suitable for use with PageView and CarouselSlider."
 repository: https://github.com/YanhqZ/easy_dot_indicator.git
-version: 1.0.0+3
+version: 1.1.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

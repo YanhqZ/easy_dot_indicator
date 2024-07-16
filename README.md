@@ -125,15 +125,9 @@ class _CustomDotExampleState extends State<CustomDotExample> {
                 customDotBuilder: (anim, cur, pre) {
                   final preSize = _getDotStyle(pre).size;
                   final curSize = _getDotStyle(cur).size;
-                  final size = Size(
-                    preSize.width +
-                        anim.value * (curSize.width - preSize.width),
-                    preSize.height +
-                        anim.value * (curSize.height - preSize.height),
-                  );
                   return CustomPaint(
                     painter: IndicatorCustomDotPainter(),
-                    size: size,
+                    size: Size.lerp(preSize, curSize, anim.value)!,
                   );
                 },
               ),

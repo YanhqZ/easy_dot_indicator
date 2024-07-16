@@ -1,3 +1,7 @@
+## 1.1.0
+* `EasyDotIndicatorCustomConfig` add activeColor and inactiveColor.
+* `DotStyle` remove opacity.
+
 ## 1.0.0+3
 * Improved the Pub Points.
 
