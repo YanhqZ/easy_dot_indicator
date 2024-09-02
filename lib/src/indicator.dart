@@ -192,6 +192,15 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     });
   }
 
+  @override
+  void didUpdateWidget(covariant EasyDotIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    maxWidth = _calculateIndicatorMaxWidth();
+    scrollController.jumpTo(
+      _calculateScrollOffset(current),
+    );
+  }
+
   /// Draw a dot based on the current position
   Dot indicatorDot(int dotIndex, int selectedIndex) {
     if (dotIndex == selectedIndex) {
