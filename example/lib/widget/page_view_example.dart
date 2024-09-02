@@ -23,7 +23,7 @@ class _PageViewExampleState extends State<PageViewExample> {
             child: PageView.builder(
               itemBuilder: (_, index) => Container(
                 alignment: Alignment.center,
-                color: index.isEven ? Colors.blue : Colors.red,
+                color: Theme.of(context).colorScheme.inversePrimary,
                 child: Text(
                   'PageView:Item$index',
                   style: const TextStyle(fontSize: 24, color: Colors.white),

@@ -41,26 +41,29 @@ class _DemoPageState extends State<DemoPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('EasyDotIndicator Demo'),
       ),
-      body: const Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: PageViewExample(),
-          ),
-          SizedBox(height: 20),
-          Align(
-            alignment: Alignment.center,
-            child: CarouselSliderExample(),
-          ),
-          SizedBox(height: 20),
-          Align(
-            alignment: Alignment.center,
-            child: CustomDotExample(),
-          ),
-        ],
+      body: const SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
+              child: PageViewExample(),
+            ),
+            SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
+              child: CarouselSliderExample(),
+            ),
+            SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
+              child: CustomDotExample(),
+            ),
+          ],
+        ),
       ),
     );
   }

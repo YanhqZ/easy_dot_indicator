@@ -26,10 +26,13 @@ class _CarouselSliderExampleState extends State<CarouselSliderExample> {
                 10,
                 (index) => Container(
                   alignment: Alignment.center,
-                  color: Colors.grey,
+                  color: Theme.of(context).colorScheme.secondaryContainer,
                   child: Text(
                     'CarouselSlider:Item$index',
-                    style: const TextStyle(fontSize: 24, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    ),
                   ),
                 ),
               ),
@@ -47,12 +50,12 @@ class _CarouselSliderExampleState extends State<CarouselSliderExample> {
                 visibleNum: 5,
                 count: 10,
                 controller: indicatorController,
-                dotConfig: const EasyDotIndicatorCustomConfig(
-                  big: DotStyle(size: Size.square(14)),
-                  middle: DotStyle(size: Size.square(10)),
-                  small: DotStyle(size: Size.square(6)),
-                  activeColor: Color(0xFF000000),
-                  inactiveColor: Color(0xFF757575),
+                dotConfig: EasyDotIndicatorCustomConfig(
+                  big: const DotStyle(size: Size.square(14)),
+                  middle: const DotStyle(size: Size.square(10)),
+                  small: const DotStyle(size: Size.square(6)),
+                  activeColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                  inactiveColor: Theme.of(context).colorScheme.onSecondaryContainer.withOpacity(0.4),
                 )),
           ),
         ],

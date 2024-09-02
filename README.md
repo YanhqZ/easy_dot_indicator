@@ -2,9 +2,9 @@
 
 A simple dot-style indicator Flutter widget.
 
-![image](https://raw.githubusercontent.com/YanhqZ/img/master/blob/easy_dot_indicator/img1.gif)
+![image](https://raw.githubusercontent.com/YanhqZ/img/master/blob/easy_dot_indicator/img5.gif)
 
-![image](https://raw.githubusercontent.com/YanhqZ/img/master/blob/easy_dot_indicator/img2.gif)
+![image](https://raw.githubusercontent.com/YanhqZ/img/master/blob/easy_dot_indicator/img6.gif)
 
 ## Getting Started
 

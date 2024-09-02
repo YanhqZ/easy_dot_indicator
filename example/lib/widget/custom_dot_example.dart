@@ -23,7 +23,7 @@ class _CustomDotExampleState extends State<CustomDotExample> {
             child: PageView.builder(
               itemBuilder: (_, index) => Container(
                 alignment: Alignment.center,
-                color: Colors.red,
+                color: Theme.of(context).colorScheme.secondary,
                 child: Text(
                   'CustomDot:Item$index',
                   style: const TextStyle(fontSize: 24, color: Colors.white),
@@ -48,11 +48,12 @@ class _CustomDotExampleState extends State<CustomDotExample> {
                 animDuration: const Duration(milliseconds: 200),
                 gap: 6,
                 customDotBuilder: (anim, cur, pre) {
-                  final preSize = _getDotStyle(pre).size;
-                  final curSize = _getDotStyle(cur).size;
+                  final preDot = _getDotStyle(pre);
+                  final curDot = _getDotStyle(cur);
                   return CustomPaint(
-                    painter: IndicatorCustomDotPainter(),
-                    size: Size.lerp(preSize, curSize, anim.value)!,
+                    painter: IndicatorCustomDotPainter(
+                        Color.lerp(preDot.color, curDot.color, anim.value)!),
+                    size: Size.lerp(preDot.size, curDot.size, anim.value)!,
                   );
                 },
               ),
@@ -65,7 +66,7 @@ class _CustomDotExampleState extends State<CustomDotExample> {
 
   DotStyle _getDotStyle(Dot dot) {
     return switch (dot) {
-      Dot.big => const DotStyle(size: Size.square(12)),
+      Dot.big => const DotStyle(size: Size.square(14), color: Colors.yellow),
       Dot.middle => const DotStyle(size: Size.square(9)),
       Dot.small => const DotStyle(size: Size.square(6)),
     };
@@ -73,10 +74,14 @@ class _CustomDotExampleState extends State<CustomDotExample> {
 }
 
 class IndicatorCustomDotPainter extends CustomPainter {
+  final Color color;
+
+  IndicatorCustomDotPainter(this.color);
+
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()
-      ..color = Colors.white
+      ..color = color
       ..style = PaintingStyle.fill;
 
     Path path = Path();
