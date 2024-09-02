@@ -1,3 +1,7 @@
+## 1.1.1
+* Reduce unnecessary calculation.
+* Fix hot-reload problem.
+
 ## 1.1.0
 * `EasyDotIndicatorCustomConfig` add activeColor and inactiveColor.
 * `DotStyle` remove opacity.
