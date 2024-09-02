@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_dot_indicator/easy_dot_indicator.dart';
 import 'package:easy_dot_indicator/src/extension/list_ext.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +34,7 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   late List<Dot> dots;
   late Animation<double> animation;
   late AnimationController animController;
-  final ValueNotifier<double> widthNotifier = ValueNotifier<double>(0);
+  late double maxWidth;
   int current = 0;
   int pending = 0;
 
@@ -48,6 +46,8 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     scrollController = ScrollController();
     dots = List.generate(
         widget.count, (index) => indicatorDot(index, controller.current));
+    // Calculate the max width to promise the dot can be displayed completely during the animation
+    maxWidth = _calculateIndicatorMaxWidth();
     animController = AnimationController(
         duration: widget.dotConfig.animDuration, vsync: this);
     animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
@@ -78,12 +78,6 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
         if (animController.isAnimating) {
           animController.stop(canceled: true);
         }
-        // Calculate the bigger width between the current and pending and update UI
-        // to promise the dot can be displayed completely during the animation
-        widthNotifier.value = max(
-          _calculateIndicatorWidth(pending),
-          _calculateIndicatorWidth(current),
-        );
         // Start animation
         animController.reset();
         animController.forward();
@@ -98,8 +92,8 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
     });
   }
 
-  /// Calculate indicator width according to the [count] of dots
-  double _calculateIndicatorWidth(int index) {
+  /// Calculate indicator max width
+  double _calculateIndicatorMaxWidth() {
     final count = widget.count;
     final visibleNum = widget.visibleNum;
     final gap = widget.dotConfig.gap;
@@ -110,17 +104,10 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
           widget.dotConfig.middle.size.width * (visibleNum - 1) +
           (visibleNum - 1) * gap;
     } else {
-      if (index == count - 1 || index == 0) {
-        return widget.dotConfig.big.size.width +
-            widget.dotConfig.middle.size.width * 1 +
-            widget.dotConfig.small.size.width * (visibleNum - 1 - 1) +
-            (visibleNum - 1) * gap;
-      } else {
-        return widget.dotConfig.big.size.width +
-            widget.dotConfig.middle.size.width * 2 +
-            widget.dotConfig.small.size.width * (visibleNum - 1 - 2) +
-            (visibleNum - 1) * gap;
-      }
+      return widget.dotConfig.big.size.width +
+          widget.dotConfig.middle.size.width * 2 +
+          widget.dotConfig.small.size.width * (visibleNum - 1 - 2) +
+          (visibleNum - 1) * gap;
     }
   }
 
@@ -153,18 +140,10 @@ class _EasyDotIndicatorState extends State<EasyDotIndicator>
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
       controller._context = context;
-      // Update the width of the indicator when the context injected
-      widthNotifier.value = _calculateIndicatorWidth(pending);
-      return ValueListenableBuilder(
-        valueListenable: widthNotifier,
-        builder: (context, width, child) {
-          return Container(
-            alignment: Alignment.center,
-            width: width,
-            height: widget.dotConfig.big.size.height,
-            child: child,
-          );
-        },
+      return Container(
+        alignment: Alignment.center,
+        width: maxWidth,
+        height: widget.dotConfig.big.size.height,
         child: ScrollConfiguration(
           behavior: const ScrollBehavior().copyWith(overscroll: false),
           child: IgnorePointer(
